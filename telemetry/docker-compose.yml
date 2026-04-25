@@ -1,0 +1,59 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-remote-write-receiver
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  k6:
+    image: grafana/k6:1.1.0
+    profiles:
+      - bench
+    environment:
+      BASE_URL: ${BASE_URL:-http://host.docker.internal:8000}
+      ROUTE_PROFILE: ${ROUTE_PROFILE:-sync-mixed}
+      RATE: ${RATE:-100}
+      DURATION: ${DURATION:-3m}
+      PRE_ALLOCATED_VUS: ${PRE_ALLOCATED_VUS:-100}
+      MAX_VUS: ${MAX_VUS:-500}
+      K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
+      K6_PROMETHEUS_RW_TREND_STATS: p(50),p(90),p(95),p(99),max
+    command:
+      - run
+      - -o
+      - experimental-prometheus-rw
+      - /scripts/sync-constant-arrival.js
+    volumes:
+      - ../bench/k6:/scripts:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-data:
+  prometheus-data:

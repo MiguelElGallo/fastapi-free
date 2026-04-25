@@ -1,0 +1,5 @@
+GET http://localhost:8000/lookup/key-1
+GET http://localhost:8000/lookup-preencoded/key-2
+GET http://localhost:8000/cpu/key-3
+GET http://localhost:8000/cow/key-4
+GET http://localhost:8000/locked-cache/key-5

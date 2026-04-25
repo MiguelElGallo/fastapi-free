@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+set -eu
+
+PATH="$HOME/.rd/bin:$PATH"
+
+exec docker run --rm \
+  -v "$PWD:$PWD" \
+  -w "$PWD" \
+  -e BASE_URL \
+  -e TARGET_RPS \
+  -e RATE \
+  -e DURATION \
+  -e PREALLOCATED_VUS \
+  -e PRE_ALLOCATED_VUS \
+  -e MAX_VUS \
+  -e ROUTE_PROFILE \
+  -e DATASET_SIZE \
+  -e LARGE_DATASET_SIZE \
+  -e REQUEST_TIMEOUT \
+  -e K6_LOG_LEVEL \
+  grafana/k6:1.1.0 "$@"
