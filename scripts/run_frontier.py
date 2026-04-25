@@ -437,7 +437,10 @@ def main() -> int:
                         }
                         write_json(run_dir / "cell-summary.json", result)
                         append_jsonl(out_dir / "frontier-results.jsonl", result)
-                        if k6_run["timed_out"] or k6_run["returncode"] not in (0, None):
+                        infrastructure_failure = k6_run["timed_out"] or (
+                            k6_run["returncode"] not in (0, None) and not metrics
+                        )
+                        if infrastructure_failure:
                             failures.append(
                                 {
                                     "run": run_name,
